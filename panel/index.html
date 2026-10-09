@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#6d1428">
+<title>Panel Titania</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: login → marcador del reto, cifras, embudo + sesiones, y un listado filtrable de personas. Marca de la web de Titania. */
+:root{
+  --bg:#faf8f6; --surface:#ffffff; --fg:#1c1b1e; --muted:#5f5a63; --line:rgba(28,27,30,.11);
+  --accent:#6d1428; --accent-soft:rgba(109,20,40,.08); --gold:#b07b40; --gold-soft:rgba(176,123,64,.16);
+  --good:#2f7a4f; --warn:#a8641c; --track:rgba(28,27,30,.08);
+  --display:'Manrope','Segoe UI',system-ui,sans-serif; --body:'Inter',system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#151316; --surface:#1f1c20; --fg:#f2eef0; --muted:#a8a1aa; --line:rgba(255,255,255,.1);
+  --accent:#e0697f; --accent-soft:rgba(224,105,127,.12); --gold:#d9a467; --gold-soft:rgba(217,164,103,.16);
+  --good:#6cc28f; --warn:#e3a35a; --track:rgba(255,255,255,.08); color-scheme:dark }}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:24px 56px;display:grid;gap:24px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+.eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Login */
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px 16px}
+.login form{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:30px 26px;display:grid;gap:16px}
+.login h1{font-size:24px;font-weight:800}
+.login p{margin:0;color:var(--muted);font-size:14px}
+.field{display:grid;gap:6px}
+.field label{font-size:13px;font-weight:600}
+.field input{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg);font-size:16px}
+.btn{border:0;border-radius:999px;padding:13px 18px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+.btn[disabled]{opacity:.6;cursor:wait}
+.err{color:var(--accent);font-size:13.5px;min-height:1.2em}
+.brandline{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800}
+.brandline .dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+
+/* Cabecera */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:17px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+button.ghost{font-size:12.5px;background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+button.ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Reto */
+.reto{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:28px 26px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:26px;align-items:center}
+@media (max-width:760px){.reto{grid-template-columns:1fr;padding:22px 18px}}
+.score{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.score .big{font-family:var(--display);font-weight:800;font-size:clamp(64px,16vw,112px);line-height:.9;color:var(--accent);letter-spacing:-.03em}
+.score .of{font-family:var(--display);font-weight:700;font-size:20px;color:var(--muted)}
+.reto p.lede{margin:10px 0 0;color:var(--muted);max-width:42ch}
+.track{position:relative;height:14px;border-radius:999px;background:var(--track);margin-top:22px}
+.track .fill{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--accent);width:0;transition:width 1s cubic-bezier(.2,.7,.2,1)}
+.ticks{position:relative;height:30px;margin-top:6px;font-size:11.5px;color:var(--muted)}
+.ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.ticks span::before{content:"";display:block;width:1px;height:6px;background:var(--line);margin:0 auto 3px}
+.ticks span.rec{color:var(--gold);font-weight:600}
+.ticks span.rec::before{background:var(--gold);height:8px}
+.money{border-left:1px solid var(--line);padding-left:26px;display:grid;gap:6px}
+@media (max-width:760px){.money{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px}}
+.money .v{font-family:var(--display);font-weight:800;font-size:clamp(28px,7vw,42px);line-height:1.05}
+.money .s{color:var(--muted);font-size:13.5px}
+.money .tier{display:inline-block;margin-top:6px;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--gold-soft);color:var(--gold);width:fit-content}
+
+/* Cifras */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{padding:16px 4px 4px;border-top:2px solid var(--line)}
+.kpi .v{font-family:var(--display);font-weight:800;font-size:28px;line-height:1.1}
+.kpi .l{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* Paneles */
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 18px 18px;min-width:0;display:grid;gap:14px;align-content:start}
+.panel h2{font-size:17px;font-weight:800}
+.panel .sub{font-size:13px;color:var(--muted);margin-top:2px}
+
+/* Embudo */
+.funnel{display:grid;gap:8px}
+.frow{display:grid;grid-template-columns:92px minmax(0,1fr) 48px;gap:10px;align-items:center;font-size:14px;background:none;border:0;padding:4px 6px;margin:0 -6px;border-radius:8px;text-align:left;cursor:pointer;width:calc(100% + 12px)}
+.frow:hover{background:var(--accent-soft)}
+.fbar{height:24px;border-radius:7px;background:var(--track);overflow:hidden}
+.fbar i{display:block;height:100%;border-radius:7px;background:var(--accent);width:0;transition:width .8s ease}
+.frow:nth-child(1) .fbar i{opacity:.35}.frow:nth-child(2) .fbar i{opacity:.5}.frow:nth-child(3) .fbar i{opacity:.7}
+.frow .n{text-align:right;font-weight:600}
+.conv{font-size:12.5px;color:var(--muted);display:flex;gap:6px 16px;flex-wrap:wrap}
+.conv b{color:var(--fg)}
+.states{margin:2px 0 0;padding-top:12px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
+@media (max-width:480px){.states{grid-template-columns:1fr}}
+.states dt{font-size:12.5px;font-weight:600}
+.states dd{margin:1px 0 0;font-size:12.5px;color:var(--muted);line-height:1.4}
+.hint{margin:0;font-size:12px;color:var(--muted)}
+
+/* Gráfica */
+.chart{width:100%;overflow-x:auto}
+.chart svg{display:block;width:100%;min-width:320px;height:auto}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* Listas */
+.list{display:grid}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;padding:11px 0;border-top:1px solid var(--line);align-items:center}
+.item:first-child{border-top:0}
+.item .name{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.item .meta{font-size:12.5px;color:var(--muted);grid-column:1;min-width:0;overflow-wrap:anywhere}
+.item .side{grid-row:1 / span 2;grid-column:2;text-align:right;font-size:13px}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.s-Interesado{background:var(--track);color:var(--muted)}
+.pill.s-Visitante{background:rgba(59,110,170,.14);color:#3b6eaa}
+.pill.s-Candidato{background:var(--gold-soft);color:var(--gold)}
+.pill.s-Miembro{background:rgba(47,122,79,.14);color:var(--good)}
+.pill.s-Descartado{background:var(--track);color:var(--muted);text-decoration:line-through}
+.empty{color:var(--muted);font-size:13.5px;padding:8px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:12.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:none}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.hot{border-color:var(--gold);color:var(--gold)}
+
+/* Directorio */
+.dir .filters{display:grid;gap:10px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.tab{flex:none;border:1px solid var(--line);background:none;border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+.tab b{font-weight:600;margin-left:4px;font-variant-numeric:tabular-nums}
+.tab[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.frow2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:8px}
+@media (max-width:620px){.frow2{grid-template-columns:1fr 1fr}.frow2 .search{grid-column:1 / -1}}
+.frow2 input,.frow2 select{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);font-size:15px;min-width:0}
+.count{font-size:12.5px;color:var(--muted)}
+.person{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 0;border-top:1px solid var(--line)}
+.person:first-child{border-top:0}
+.person .name{font-weight:600;overflow-wrap:anywhere}
+.person .meta{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.person .right{text-align:right;display:grid;gap:4px;justify-items:end;align-content:start}
+.person .actions{grid-column:1 / -1;display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px}
+.person .actions a{color:var(--accent);text-decoration:none;font-weight:600}
+.more{justify-self:center}
+
+/* Estados */
+.notice{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:12px;padding:14px 16px;font-size:14px}
+.notice b{display:block;font-family:var(--display);margin-bottom:2px}
+.foot{font-size:12px;color:var(--muted);text-align:center}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- Acceso -->
+<section class="login" id="login">
+  <form id="loginForm" novalidate>
+    <div class="brandline"><span class="dot"></span>BNI Titania</div>
+    <h1>Panel del grupo</h1>
+    <p>Acceso solo para la dirección y el equipo de Titania.</p>
+    <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required></div>
+    <div class="field"><label for="password">Contraseña</label><input id="password" type="password" autocomplete="current-password" required></div>
+    <button class="btn" id="loginBtn" type="submit">Entrar</button>
+    <div class="err" id="loginErr" role="alert"></div>
+  </form>
+</section>
+
+<!-- Panel -->
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="brand"><span class="dot"></span>BNI Titania · Panel</div>
+    <div class="tools"><span id="fresh">Cargando…</span><button class="ghost" id="refresh" type="button">Actualizar</button><button class="ghost" id="logout" type="button">Salir</button></div>
+  </header>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <section class="reto">
+    <div>
+      <div class="eyebrow">Reto riojano</div>
+      <div class="score"><span class="big num" id="members">–</span><span class="of">de 111 miembros</span></div>
+      <p class="lede" id="retoLede">El grupo más grande de España tiene 111.</p>
+      <div class="track" aria-hidden="true"><div class="fill" id="fill"></div></div>
+      <div class="ticks" id="ticks" aria-hidden="true"></div>
+    </div>
+    <div class="money">
+      <div class="eyebrow">Negocio que mueve un grupo de este tamaño</div>
+      <div class="v num" id="money">–</div>
+      <div class="s" id="refs">referencias al mes</div>
+      <span class="tier" id="tier">Según la tabla de grupos BNI</span>
+    </div>
+  </section>
+
+  <section class="kpis">
+    <div class="kpi"><div class="v num" id="kPeople">–</div><div class="l">personas han pedido venir</div></div>
+    <div class="kpi"><div class="v num" id="kVisits">–</div><div class="l">asistencias registradas</div></div>
+    <div class="kpi"><div class="v num" id="kConv">–</div><div class="l">de los que vienen acaban siendo miembros</div></div>
+    <div class="kpi"><div class="v num" id="kDays">–</div><div class="l">días de media hasta hacerse miembro</div></div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel">
+      <div><h2>Embudo</h2><div class="sub">Toca una fase para ver quién está en ella</div></div>
+      <div class="funnel" id="funnel"></div>
+      <div class="conv" id="conv"></div>
+      <dl class="states">
+        <div><dt>Interesado</dt><dd>Se ha apuntado pero aún no ha venido</dd></div>
+        <div><dt>Visitante</dt><dd>Ha venido una vez</dd></div>
+        <div><dt>Candidato</dt><dd>Ha venido dos o más veces y aún no es miembro</dd></div>
+        <div><dt>Miembro</dt><dd>Ya forma parte del grupo</dd></div>
+      </dl>
+      <p class="hint">Los descartados no cuentan en el embudo.</p>
+    </section>
+    <section class="panel">
+      <div><h2>Sesiones de los miércoles</h2><div class="sub">Dentro de cada columna de inscritos: cuántos vinieron y cuántos eran nuevos. Últimas 10</div></div>
+      <div class="chart" id="chart"></div>
+      <div class="legend"><span><i style="background:var(--track)"></i>Inscritos</span><span><i style="background:var(--accent)"></i>Asistentes</span><span><i style="background:var(--gold)"></i>Caras nuevas</span></div>
+    </section>
+  </div>
+
+  <section class="panel dir" id="dir">
+    <div><h2>Personas</h2><div class="sub">Filtra por fase, categoría o quién les invitó</div></div>
+    <div class="filters">
+      <div class="tabs" id="tabs" role="group" aria-label="Fase"></div>
+      <div class="frow2">
+        <input class="search" id="q" type="search" placeholder="Buscar nombre, actividad o empresa" aria-label="Buscar">
+        <select id="fCat" aria-label="Categoría"><option value="">Todas las categorías</option></select>
+        <select id="fInv" aria-label="Invitado por"><option value="">Invitados por cualquiera</option></select>
+      </div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="list" id="people"></div>
+    <button class="ghost more" id="more" type="button" hidden>Ver más</button>
+  </section>
+
+  <div class="grid2">
+    <section class="panel">
+      <div><h2>Quién trae gente</h2><div class="sub">Invitados por cada persona y cuántos se han quedado</div></div>
+      <div class="list" id="invs"></div>
+    </section>
+    <section class="panel">
+      <div><h2>Sillas</h2><div class="sub">Categorías con miembro (rellenas) y con interesados esperando (doradas)</div></div>
+      <div class="chips" id="sillas"></div>
+    </section>
+  </div>
+
+  <p class="foot">Datos en directo de Airtable. Acceso personal: no compartas tu contraseña.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var ENDPOINT = "https://hook.eu1.make.com/u82b7669zeid9bys9774ufbjc4v335dr";
+  var P = { nombre:"flddqz2IckdB4Zmfo", email:"fldy4OnFwgeIgWWrI", tel:"fldeQOd7AW6i7OBWl", act:"fldB3MxypXJhdFaGg", cat:"fldAst1LwdGZmeSJH",
+    emp:"fldvlFX0oDaS2qOr8", estado:"fld8JYW46yvvlxPAn", invTxt:"fldZJgmztoLUqDpl0", invPor:"fldotfu2orYmHCTUh", fm:"fldoUoybSdBzquFB2",
+    asis:"fldpgirt4gzVr6Ci5", ult:"fldyQkda2PujenW4m", inv:"fldvEE69sTLaZm5sm", invM:"fldRkK7CVelKNkYr6", esM:"fldaELc9ioigy4pb4", dias:"fld0cia2me7OAf4kD" };
+  var S = { fecha:"fldjswmyl0SU4PKad", ins:"fldU4Wf2qU8FeE0XQ", asi:"fldiejfGPTTFWqP13", nuevas:"fldyQDwx4O0Fu3EmB" };
+  var TABLE=[{n:20,a:50,b:80,m:30000},{n:30,a:150,b:180,m:60000},{n:50,a:400,b:450,m:180000},{n:75,a:600,b:700,m:360000},{n:100,a:800,b:1000,m:750000}];
+  var RECORD=111, ORDER=["Interesado","Visitante","Candidato","Miembro"], RANK={Interesado:0,Visitante:1,Candidato:2,Miembro:3};
+  var $=function(id){return document.getElementById(id);};
+  var fmtInt=new Intl.NumberFormat("es-ES"), fmtEur=new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:0});
+  var cred=null, people=[], sessions=[], byId={};
+  var filt={estado:"Todos", q:"", cat:"", inv:"", shown:25};
+
+  function store(k,v){ try{ v==null?sessionStorage.removeItem(k):sessionStorage.setItem(k,v); }catch(e){} }
+  function load(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }
+  function txt(v){ if(v==null) return ""; if(Array.isArray(v)) return v.map(txt).join(", "); if(typeof v==="object") return v.name||""; return String(v); }
+  function num(v){ if(Array.isArray(v)) v=v[0]; var n=Number(v); return isFinite(n)?n:0; }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function norm(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
+  function shortDate(iso){ if(!iso) return ""; var d=new Date(String(iso).slice(0,10)+"T12:00:00"); return isNaN(d)?"":d.toLocaleDateString("es-ES",{day:"numeric",month:"short"}); }
+  function interp(n,k){ var t=TABLE,L=t.length-1; if(n<=0) return 0; if(n<=t[0].n) return t[0][k]*n/t[0].n;
+    if(n>=t[L].n){ var a=t[L-1],b=t[L]; return b[k]+(n-b.n)*(b[k]-a[k])/(b.n-a.n); }
+    for(var i=0;i<L;i++) if(n<=t[i+1].n){ var f=(n-t[i].n)/(t[i+1].n-t[i].n); return t[i][k]+(t[i+1][k]-t[i][k])*f; } return 0; }
+  async function sha256(s){ var b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0");}).join(""); }
+
+  // ---------- Llamadas al webhook (Make valida el acceso en cada llamada) ----------
+  async function call(table, offset){
+    var body=new URLSearchParams({email:cred.email, h:cred.h, table:table});
+    if(offset) body.set("offset", offset);
+    var res;
+    try{ res=await fetch(ENDPOINT,{method:"POST", body:body}); }
+    catch(e){ var er=new Error("red"); er.code="red"; throw er; }
+    var text=await res.text(), data=null;
+    try{ data=JSON.parse(text); }catch(e){}
+    if(res.status===401){ var e1=new Error("credenciales"); e1.code="401"; throw e1; }
+    if(!res.ok || !data || !Array.isArray(data.records)){ var e2=new Error("servicio"); e2.code="servicio"; e2.status=res.status; throw e2; }
+    return data;
+  }
+  async function fetchAll(table){
+    var out=[], offset=null, guard=0;
+    do{ var d=await call(table, offset); out=out.concat(d.records); offset=d.offset||null; guard++; } while(offset && guard<20);
+    return out;
+  }
+
+  // ---------- Acceso ----------
+  $("loginForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+    var email=$("email").value.trim().toLowerCase(), pwd=$("password").value;
+    if(!email||!pwd){ $("loginErr").textContent="Escribe tu email y tu contraseña."; return; }
+    $("loginBtn").disabled=true; $("loginBtn").textContent="Comprobando…"; $("loginErr").textContent="";
+    try{
+      cred={email:email, h:await sha256(email+":"+pwd)};
+      await refresh(true);
+      store("bni_cred", JSON.stringify(cred));
+      $("password").value="";
+    }catch(err){
+      cred=null;
+      $("loginErr").textContent = err.code==="401" ? "Email o contraseña incorrectos, o tu acceso no está activo." :
+        err.code==="red" ? "No hay conexión. Revisa tu internet y vuelve a intentarlo." : "El servicio no responde ahora. Prueba en unos minutos.";
+      showLogin();
+    }finally{ $("loginBtn").disabled=false; $("loginBtn").textContent="Entrar"; }
+  });
+  $("logout").addEventListener("click", function(){ store("bni_cred",null); cred=null; people=[]; sessions=[]; showLogin(); });
+  $("refresh").addEventListener("click", function(){ refresh(false).catch(handleErr); });
+  function showLogin(){ $("app").hidden=true; $("login").hidden=false; }
+  function showApp(){ $("login").hidden=true; $("app").hidden=false; }
+
+  async function refresh(first){
+    $("fresh").textContent="Actualizando…";
+    var r=await Promise.all([fetchAll("personas"), fetchAll("sesiones")]);
+    people=r[0].map(function(x){ var f=x.fields||{}; f._id=x.id; return f; });
+    sessions=r[1].map(function(x){ return x.fields||{}; });
+    byId={}; people.forEach(function(p){ byId[p._id]=p; });
+    $("notice").hidden=true; showApp(); renderAll();
+    $("fresh").textContent="Actualizado a las "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  }
+  function handleErr(err){
+    if(err.code==="401"){ store("bni_cred",null); cred=null; showLogin(); $("loginErr").textContent="Tu acceso ha cambiado. Vuelve a entrar."; return; }
+    var n=$("notice"); n.innerHTML="<b>No se han podido actualizar los datos</b>"+(err.code==="red"?"Sin conexión a internet.":"El servicio no responde ahora. Se muestran los últimos datos.");
+    n.hidden=false; $("fresh").textContent="Sin actualizar";
+  }
+
+  // ---------- Render ----------
+  (function(){ var max=120, h=""; [0,20,50,75,100].forEach(function(v){ h+='<span style="left:'+(v/max*100)+'%">'+v+'</span>'; });
+    h+='<span class="rec" style="left:'+(RECORD/max*100)+'%">111</span>'; $("ticks").innerHTML=h; })();
+
+  function estadoOf(p){ return txt(p[P.estado])||"Interesado"; }
+  function renderAll(){ renderSummary(); renderFunnel(); renderSessions(); buildFilters(); renderPeople(); renderInvs(); renderSillas(); }
+
+  function renderSummary(){
+    var m=people.filter(function(p){ return estadoOf(p)==="Miembro"; }).length;
+    $("members").textContent=fmtInt.format(m);
+    $("fill").style.width=Math.min(100,m/120*100)+"%";
+    $("retoLede").textContent = m>RECORD ? "Titania es el grupo más grande de España." : m===0 ? "El primer miembro empieza la cuenta." : "Faltan "+fmtInt.format(RECORD-m)+" para superar al grupo más grande de España.";
+    $("money").textContent = m ? fmtEur.format(Math.round(interp(m,"m")/1000)*1000)+" al mes" : "–";
+    $("refs").textContent = m ? fmtInt.format(Math.round(interp(m,"a")/10)*10)+" – "+fmtInt.format(Math.round(interp(m,"b")/10)*10)+" referencias al mes" : "Aún no hay miembros registrados";
+    var next=TABLE.filter(function(t){ return t.n>m; })[0];
+    $("tier").textContent = next ? "Con "+next.n+" miembros: "+fmtEur.format(next.m)+" al mes" : "Por encima del último tramo de la tabla";
+    var active=people.filter(function(p){ return estadoOf(p)!=="Descartado"; });
+    var visits=people.reduce(function(s,p){ return s+num(p[P.asis]); },0);
+    var came=people.filter(function(p){ return num(p[P.asis])>0; });
+    var cameM=came.filter(function(p){ return estadoOf(p)==="Miembro"; }).length;
+    var days=people.map(function(p){ return p[P.dias]; }).filter(function(v){ return v!=null&&v!==""; }).map(num);
+    $("kPeople").textContent=fmtInt.format(active.length);
+    $("kVisits").textContent=fmtInt.format(visits);
+    $("kConv").textContent=came.length?Math.round(cameM/came.length*100)+" %":"–";
+    $("kDays").textContent=days.length?fmtInt.format(Math.round(days.reduce(function(a,b){return a+b;},0)/days.length)):"–";
+  }
+
+  function renderFunnel(){
+    var active=people.filter(function(p){ return estadoOf(p)!=="Descartado"; });
+    var counts=ORDER.map(function(_,i){ return active.filter(function(p){ return (RANK[estadoOf(p)]||0)>=i; }).length; });
+    var top=counts[0]||1;
+    $("funnel").innerHTML=ORDER.map(function(s,i){
+      return '<button type="button" class="frow" data-estado="'+s+'"><span>'+s+'</span><span class="fbar"><i style="width:'+(counts[i]/top*100)+'%"></i></span><span class="n num">'+fmtInt.format(counts[i])+'</span></button>'; }).join("");
+    function pct(a,b){ return b?Math.round(a/b*100)+" %":"–"; }
+    $("conv").innerHTML='Se apunta → viene: <b class="num">'+pct(counts[1],counts[0])+'</b><span>Viene → vuelve: <b class="num">'+pct(counts[2],counts[1])+'</b></span><span>Vuelve → miembro: <b class="num">'+pct(counts[3],counts[2])+'</b></span>';
+    Array.prototype.forEach.call($("funnel").querySelectorAll(".frow"), function(b){
+      b.addEventListener("click", function(){ setEstado(b.getAttribute("data-estado")); $("dir").scrollIntoView({behavior:"smooth",block:"start"}); });
+    });
+  }
+
+  function renderSessions(){
+    var ss=sessions.filter(function(s){ return s[S.fecha]; }).sort(function(a,b){ return String(a[S.fecha]).localeCompare(String(b[S.fecha])); }).slice(-10);
+    if(!ss.length){ $("chart").innerHTML='<div class="empty">Todavía no hay sesiones.</div>'; return; }
+    var W=560,H=240,pl=30,pr=8,pt=22,pb=34,iw=W-pl-pr,ih=H-pt-pb;
+    var max=Math.max(4,Math.max.apply(null,ss.map(function(s){ return num(s[S.ins]); })));
+    var step=max<=10?2:max<=25?5:10; max=Math.ceil(max/step)*step;
+    var bw=iw/ss.length, y=function(v){ return pt+ih-(v/max*ih); }, g="";
+    for(var v=0;v<=max;v+=step){ g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--line)"/><text x="'+(pl-6)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+v+'</text>'; }
+    ss.forEach(function(s,i){
+      var x=pl+i*bw+bw*.12, w=bw*.76, ins=num(s[S.ins]), asi=num(s[S.asi]), nu=num(s[S.nuevas]), pad=w*.12, cw=(w-pad*3)/2;
+      g+='<rect x="'+x+'" y="'+y(ins)+'" width="'+w+'" height="'+(pt+ih-y(ins))+'" rx="4" fill="var(--track)"><title>'+ins+' inscritos</title></rect>';
+      g+='<rect x="'+(x+pad)+'" y="'+y(asi)+'" width="'+cw+'" height="'+(pt+ih-y(asi))+'" rx="3" fill="var(--accent)"><title>'+asi+' asistentes</title></rect>';
+      g+='<rect x="'+(x+pad*2+cw)+'" y="'+y(nu)+'" width="'+cw+'" height="'+(pt+ih-y(nu))+'" rx="3" fill="var(--gold)"><title>'+nu+' caras nuevas</title></rect>';
+      if(ins) g+='<text x="'+(x+w/2)+'" y="'+(y(ins)-5)+'" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--muted)">'+ins+'</text>';
+      g+='<text x="'+(x+w/2)+'" y="'+(H-12)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+esc(shortDate(s[S.fecha]))+'</text>';
+    });
+    $("chart").innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Inscritos, asistentes y caras nuevas por sesión">'+g+'</svg>';
+  }
+
+  // ---------- Directorio filtrable ----------
+  function inviterName(p){ var ids=p[P.invPor]; if(Array.isArray(ids)&&ids.length&&byId[ids[0]]) return txt(byId[ids[0]][P.nombre]); return txt(p[P.invTxt]); }
+  function buildFilters(){
+    var states=["Todos"].concat(ORDER,["Descartado"]);
+    $("tabs").innerHTML=states.map(function(s){
+      var n = s==="Todos" ? people.length : people.filter(function(p){ return estadoOf(p)===s; }).length;
+      return '<button type="button" class="tab" data-estado="'+s+'" aria-pressed="'+(filt.estado===s)+'">'+s+'<b>'+n+'</b></button>'; }).join("");
+    Array.prototype.forEach.call($("tabs").querySelectorAll(".tab"), function(b){ b.addEventListener("click", function(){ setEstado(b.getAttribute("data-estado")); }); });
+    fillSelect($("fCat"), "Todas las categorías", uniq(people.map(function(p){ return txt(p[P.cat]); })), filt.cat);
+    fillSelect($("fInv"), "Invitados por cualquiera", uniq(people.map(inviterName)), filt.inv);
+  }
+  function uniq(a){ return a.filter(function(v,i){ return v && a.indexOf(v)===i; }).sort(function(x,y){ return x.localeCompare(y,"es"); }); }
+  function fillSelect(sel, first, vals, cur){ sel.innerHTML='<option value="">'+first+'</option>'+vals.map(function(v){ return '<option'+(v===cur?' selected':'')+'>'+esc(v)+'</option>'; }).join(""); }
+  function setEstado(s){ filt.estado=s; filt.shown=25; Array.prototype.forEach.call($("tabs").querySelectorAll(".tab"), function(b){ b.setAttribute("aria-pressed", String(b.getAttribute("data-estado")===s)); }); renderPeople(); }
+  $("q").addEventListener("input", function(){ filt.q=this.value; filt.shown=25; renderPeople(); });
+  $("fCat").addEventListener("change", function(){ filt.cat=this.value; filt.shown=25; renderPeople(); });
+  $("fInv").addEventListener("change", function(){ filt.inv=this.value; filt.shown=25; renderPeople(); });
+  $("more").addEventListener("click", function(){ filt.shown+=25; renderPeople(); });
+
+  function renderPeople(){
+    var q=norm(filt.q);
+    var list=people.filter(function(p){
+      if(filt.estado!=="Todos" && estadoOf(p)!==filt.estado) return false;
+      if(filt.cat && txt(p[P.cat])!==filt.cat) return false;
+      if(filt.inv && inviterName(p)!==filt.inv) return false;
+      if(q && norm([p[P.nombre],p[P.act],p[P.emp]].map(txt).join(" ")).indexOf(q)<0) return false;
+      return true;
+    }).sort(function(a,b){ return (RANK[estadoOf(b)]||0)-(RANK[estadoOf(a)]||0) || num(b[P.asis])-num(a[P.asis]) || txt(a[P.nombre]).localeCompare(txt(b[P.nombre]),"es"); });
+    $("count").textContent = list.length===1 ? "1 persona" : fmtInt.format(list.length)+" personas";
+    $("people").innerHTML = list.length ? list.slice(0,filt.shown).map(function(p){
+      var e=estadoOf(p), tel=txt(p[P.tel]), digits=tel.replace(/[^\d]/g,""), inv=inviterName(p), vis=num(p[P.asis]);
+      var meta=[txt(p[P.act]), txt(p[P.emp])].filter(Boolean).join(" · ");
+      var meta2=[txt(p[P.cat]), inv?"Invitado por "+inv:""].filter(Boolean).join(" · ");
+      return '<div class="person"><div><div class="name">'+esc(txt(p[P.nombre]))+'</div><div class="meta">'+esc(meta)+'</div>'+(meta2?'<div class="meta">'+esc(meta2)+'</div>':'')+'</div>'+
+        '<div class="right"><span class="pill s-'+esc(e)+'">'+esc(e)+'</span><span class="meta num">'+(vis?vis+(vis===1?" visita":" visitas")+(p[P.ult]?" · "+esc(shortDate(txt(p[P.ult]))):""):"Sin visitas")+'</span></div>'+
+        (tel||p[P.email]?'<div class="actions">'+(tel?'<a href="tel:'+esc(tel.replace(/\s/g,""))+'">Llamar</a><a href="https://wa.me/'+esc(digits)+'" target="_blank" rel="noopener">WhatsApp</a>':'')+(p[P.email]?'<a href="mailto:'+esc(txt(p[P.email]))+'">Email</a>':'')+'</div>':'')+
+        '</div>'; }).join("") : '<div class="empty">Nadie cumple estos filtros.</div>';
+    $("more").hidden = list.length<=filt.shown;
+  }
+
+  function renderInvs(){
+    var invs=people.filter(function(p){ return num(p[P.inv])>0; }).sort(function(a,b){ return num(b[P.inv])-num(a[P.inv]) || num(b[P.invM])-num(a[P.invM]); });
+    $("invs").innerHTML=invs.length?invs.slice(0,8).map(function(p){
+      return '<div class="item"><span class="name">'+esc(txt(p[P.nombre]))+'</span><span class="meta">'+esc(txt(p[P.act]))+'</span><span class="side"><b class="num">'+num(p[P.inv])+'</b> invitados<div class="meta"><span class="num">'+num(p[P.invM])+'</span> ya miembros</div></span></div>'; }).join("")
+      :'<div class="empty">Cuando enlacéis el campo "Invitado por" en Airtable, el ranking aparece aquí.</div>';
+  }
+  function renderSillas(){
+    var cat={};
+    people.forEach(function(p){ var e=estadoOf(p); if(e==="Descartado") return; var c=txt(p[P.cat]); if(!c) return; cat[c]=cat[c]||{m:0,w:0}; if(e==="Miembro") cat[c].m++; else cat[c].w++; });
+    var keys=Object.keys(cat).sort(function(a,b){ return (cat[b].m>0)-(cat[a].m>0) || a.localeCompare(b,"es"); });
+    $("sillas").innerHTML=keys.length?keys.map(function(k){ var c=cat[k];
+      return '<button type="button" class="chip '+(c.m?'on':(c.w?'hot':''))+'" data-cat="'+esc(k)+'">'+esc(k)+(c.w&&!c.m?' · '+c.w+' esperando':'')+'</button>'; }).join("")
+      :'<div class="empty">Asignad una Categoría BNI a cada persona para ver qué sillas están cubiertas.</div>';
+    Array.prototype.forEach.call($("sillas").querySelectorAll(".chip"), function(b){
+      b.addEventListener("click", function(){ filt.cat=b.getAttribute("data-cat"); $("fCat").value=filt.cat; setEstado("Todos"); $("dir").scrollIntoView({behavior:"smooth",block:"start"}); });
+    });
+  }
+
+  // ---------- Arranque: reutiliza la sesión de esta pestaña ----------
+  var saved=load("bni_cred");
+  if(saved){ try{ cred=JSON.parse(saved); }catch(e){ cred=null; } }
+  if(cred){ refresh(true).catch(function(err){ if(err.code==="401"){ store("bni_cred",null); cred=null; } showLogin(); if(err.code!=="401") $("loginErr").textContent="El servicio no responde ahora. Prueba en unos minutos."; }); }
+  else showLogin();
+})();
+</script>
+</body>
+</html>
