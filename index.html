@@ -1051,7 +1051,9 @@
 
     // 2) WhatsApp en pestaña nueva, dentro del propio gesto de envío
     // (necesario para que el navegador no bloquee la ventana emergente).
-    window.open(whatsappUrl, "_blank", "noopener");
+    // Con ?sinwhatsapp en la dirección se registra igual pero no se abre WhatsApp
+    // (para dar de alta a alguien a mano o hacer pruebas).
+    if (!/[?&]sinwhatsapp\b/.test(location.search)) window.open(whatsappUrl, "_blank", "noopener");
 
     showSuccess();
 
