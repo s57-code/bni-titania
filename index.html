@@ -983,7 +983,7 @@
   // de Make en MAKE_WEBHOOK_URL. Si se deja vacía, no se envía nada.
   // ---------------------------------------------------------------
   var WHATSAPP_NUMBER = "34678417797"; // Pili
-  var MAKE_WEBHOOK_URL = ""; // p. ej. "https://hook.eu2.make.com/xxxxxxxx"
+  var MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/osfbb7vgd0ide5cnkuyaxt7yno27lygb";
 
   var form = document.getElementById('invitationForm');
   var fields = document.getElementById('formFields');
@@ -1025,7 +1025,9 @@
 
     // 1) Registro en Make → Airtable (sin bloquear ni esperar respuesta)
     if (MAKE_WEBHOOK_URL) {
-      var payload = JSON.stringify({
+      // Se envía como formulario (application/x-www-form-urlencoded): Make lo
+      // entiende directamente y el navegador no necesita permiso previo (CORS).
+      var payload = new URLSearchParams({
         nombre: data.nombre,
         actividad: data.actividad,
         empresa: data.empresa,
@@ -1040,7 +1042,7 @@
         // keepalive: la petición sobrevive aunque se abra otra pestaña
         fetch(MAKE_WEBHOOK_URL, {
           method: "POST",
-          headers: { "Content-Type": "text/plain" },
+          mode: "no-cors",
           body: payload,
           keepalive: true
         }).catch(function(){});
