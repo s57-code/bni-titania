@@ -6,6 +6,15 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#6d1428">
 <title>Panel Titania</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Titania">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="application-name" content="Titania">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -43,6 +52,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .login p{margin:0;color:var(--muted);font-size:14px}
 .field{display:grid;gap:6px}
 .field label{font-size:13px;font-weight:600}
+.remember{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);cursor:pointer}
+.remember input{width:18px;height:18px;accent-color:var(--accent)}
 .field input{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg);font-size:16px}
 .btn{border:0;border-radius:999px;padding:13px 18px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
 .btn[disabled]{opacity:.6;cursor:wait}
@@ -339,6 +350,7 @@ button.copy:hover{border-color:var(--accent)}
 .notice b{display:block;font-family:var(--display);margin-bottom:2px}
 .foot{font-size:12px;color:var(--muted);text-align:center}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -353,6 +365,7 @@ button.copy:hover{border-color:var(--accent)}
     <p>Acceso solo para la dirección y el equipo de Titania.</p>
     <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required></div>
     <div class="field"><label for="password">Contraseña</label><input id="password" type="password" autocomplete="current-password" required></div>
+    <label class="remember"><input type="checkbox" id="remember" checked> Recordarme en este móvil</label>
     <button class="btn" id="loginBtn" type="submit">Entrar</button>
     <div class="err" id="loginErr" role="alert"></div>
   </form>
@@ -559,8 +572,15 @@ window.addEventListener("error", function(e){
   var cred=null, people=[], sessions=[], ins=[], byId={}, selSession=null;
   var PAGE=8, filt={estado:"Todos", q:"", cat:"", inv:"", page:0};
 
-  function store(k,v){ try{ v==null?sessionStorage.removeItem(k):sessionStorage.setItem(k,v); }catch(e){} }
-  function load(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }
+  // Las credenciales (email + huella, nunca la contraseña) se guardan en este dispositivo si se marca «Recordarme»,
+  // para que el panel añadido a la pantalla de inicio se abra ya dentro, como una app.
+  function store(k,v){
+    try{ sessionStorage.removeItem(k); localStorage.removeItem(k); }catch(e){}
+    if(v==null) return;
+    var keep = $("remember") ? $("remember").checked : true;
+    try{ (keep?localStorage:sessionStorage).setItem(k,v); }catch(e){}
+  }
+  function load(k){ try{ return localStorage.getItem(k) || sessionStorage.getItem(k); }catch(e){ return null; } }
   function txt(v){ if(v==null) return ""; if(Array.isArray(v)) return v.map(txt).join(", "); if(typeof v==="object") return v.name||""; return String(v); }
   function num(v){ if(Array.isArray(v)) v=v[0]; var n=Number(v); return isFinite(n)?n:0; }
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
