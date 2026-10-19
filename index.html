@@ -424,6 +424,18 @@
   }
   .field label .optional{font-weight:500;text-transform:none;letter-spacing:0;color:var(--charcoal-soft);margin-left:6px;}
   .field input::placeholder{color:rgba(28,27,30,0.35);}
+  .consent{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;margin-top:4px;}
+  .consent input{width:20px;height:20px;margin-top:2px;accent-color:var(--burgundy);cursor:pointer;}
+  .consent label{font-size:13.5px;line-height:1.45;color:var(--charcoal);cursor:pointer;}
+  .consent label a{color:var(--burgundy);text-decoration:underline;}
+  .consent-note{font-size:12.5px;line-height:1.45;color:var(--charcoal-soft);margin:6px 0 2px 32px;}
+  .privacy{background:var(--cream);padding:8px 0 28px;}
+  .privacy details{max-width:72ch;margin:0 auto;border-top:1px solid rgba(28,27,30,0.12);padding-top:14px;}
+  .privacy summary{cursor:pointer;font-size:13.5px;font-weight:600;color:var(--charcoal-soft);letter-spacing:0.02em;}
+  .privacy summary:hover{color:var(--burgundy);}
+  .privacy-body{margin-top:12px;font-size:13.5px;line-height:1.55;color:var(--charcoal-soft);display:grid;gap:8px;}
+  .privacy-body strong{color:var(--charcoal);}
+  .privacy-body a{color:var(--burgundy);}
   .field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   @media (max-width:520px){ .field-row{grid-template-columns:1fr;} }
   .form-success{
@@ -525,7 +537,7 @@
     <div class="wrap opp-grid">
       <div class="reveal">
         <p class="eyebrow">Cómo funciona</p>
-        <h2>Una sola persona representa cada profesión.</h2>
+        <h2>Solo <em>TÚ</em> representas tu profesión.</h2>
         <p class="opp-text">En BNI, cada actividad profesional está representada por un único miembro dentro del grupo. Si tu sector todavía tiene plaza libre, las referencias de negocio que surjan para esa categoría llegarán directamente a ti. Una estructura pensada para generar confianza entre profesionales, no competencia interna.</p>
       </div>
       <div class="opp-visual reveal">
@@ -612,7 +624,7 @@
     <div class="wrap">
       <div class="section-head reveal">
         <p class="eyebrow">El reto riojano</p>
-        <h2>El grupo más grande de España tiene 111 miembros. Está en una ciudad grande. <em style="font-style:normal;color:var(--burgundy);">Nosotros no.</em></h2>
+        <h2>El grupo más grande de España tiene 111 miembros. <em style="font-style:normal;color:var(--burgundy);">La Rioja quiere el ORO.</em></h2>
         <p>Aquí somos pocos y nos conocemos todos, que es justo lo que hace falta para que una recomendación valga. Mueve el deslizador y mira cuánto negocio se mueve en un grupo según su tamaño. Y luego decide si te quedas fuera.</p>
       </div>
 
@@ -744,6 +756,12 @@
               <input type="text" id="invitadoPor" name="invitadoPor" placeholder="Nombre del socio o socia que te habló de BNI Titania">
             </div>
 
+            <div class="consent">
+              <input type="checkbox" id="privacidad" name="privacidad" required>
+              <label for="privacidad">He leído la <a href="#proteccion-datos" id="verPrivacidad">información sobre protección de datos</a> y acepto que BNI Titania use mis datos para gestionar mi asistencia y contactar conmigo.</label>
+            </div>
+            <p class="consent-note">Solo usamos tus datos para apuntarte a la reunión, registrar quién viene y ponernos en contacto contigo. No los cedemos ni los usamos para publicidad.</p>
+
             <button type="submit" class="btn btn-primary btn-block" style="margin-top:8px;">Quiero asistir a la próxima reunión</button>
           </div>
 
@@ -756,6 +774,22 @@
   </section>
 
 </main>
+
+<section class="privacy" id="proteccion-datos">
+  <div class="wrap">
+    <details>
+      <summary>Protección de datos · Información completa</summary>
+      <div class="privacy-body">
+        <p><strong>Responsable.</strong> BNI Titania, grupo de networking empresarial en formación en Logroño (La Rioja), representado por su dirección. Contacto: Pilar Vargas, tel. <a href="tel:+34678417797">678 41 77 97</a>.</p>
+        <p><strong>Finalidad.</strong> Gestionar tu solicitud de asistencia a las reuniones informativas, registrar quién asiste y ponernos en contacto contigo en relación con esas reuniones. No usamos tus datos para publicidad ni elaboramos perfiles.</p>
+        <p><strong>Legitimación.</strong> Tu consentimiento, que nos das al marcar la casilla y enviar el formulario (art. 6.1.a del RGPD). Puedes retirarlo en cualquier momento.</p>
+        <p><strong>Destinatarios.</strong> No cedemos tus datos a terceros. Para guardarlos y gestionarlos usamos Airtable y Make como proveedores de servicio (encargados del tratamiento). Airtable puede tratar los datos en Estados Unidos, amparado en el Marco de Privacidad de Datos UE–EE. UU. El mensaje de WhatsApp lo envías tú desde tu propio teléfono.</p>
+        <p><strong>Conservación.</strong> Mientras participes en el grupo o mantengas tu interés. Si no asistes a ninguna reunión ni respondes a nuestros contactos en 12 meses, eliminamos tus datos.</p>
+        <p><strong>Derechos.</strong> Puedes acceder a tus datos, rectificarlos, suprimirlos, oponerte a su tratamiento, limitarlo o pedir su portabilidad contactando con el responsable por los medios indicados. Si consideras que no hemos atendido tus derechos, puedes reclamar ante la Agencia Española de Protección de Datos (<a href="https://www.aepd.es" rel="noopener" target="_blank">www.aepd.es</a>).</p>
+      </div>
+    </details>
+  </div>
+</section>
 
 <footer class="site-footer" id="contacto">
   <div class="wrap">
@@ -786,6 +820,12 @@
 <script>
 (function(){
   "use strict";
+
+  // El enlace de la casilla abre la información completa de protección de datos
+  var verPriv = document.getElementById('verPrivacidad');
+  if (verPriv) verPriv.addEventListener('click', function(){
+    var d = document.querySelector('#proteccion-datos details'); if (d) d.open = true;
+  });
 
   // Header shadow/border on scroll
   var header = document.getElementById('siteHeader');
@@ -1036,6 +1076,7 @@
         invitado_por: data.invitadoPor,
         sesion: sessionISO,
         origen: "web",
+        consentimiento: "si",
         enviado: new Date().toISOString()
       });
       try {
