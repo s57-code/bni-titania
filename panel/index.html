@@ -55,6 +55,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:17px}
 .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
 .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+button.ghost.env[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#fff}
+.demobar{background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-bottom:14px}
+.demobar .linkbtn{color:var(--gold);font-weight:700;margin-left:6px}
 button.ghost{font-size:12.5px;background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
 button.ghost:hover{border-color:var(--accent);color:var(--accent)}
 
@@ -359,9 +362,10 @@ button.copy:hover{border-color:var(--accent)}
 <div class="wrap" id="app" hidden>
   <header class="top">
     <div class="brand"><span class="dot"></span>BNI Titania · Panel</div>
-    <div class="tools"><span id="fresh">Cargando…</span><button class="ghost" id="refresh" type="button">Actualizar</button><button class="ghost" id="logout" type="button">Salir</button></div>
+    <div class="tools"><span id="fresh">Cargando…</span><button class="ghost" id="refresh" type="button">Actualizar</button><button class="ghost env" id="envBtn" type="button" hidden aria-pressed="false">Ver demo</button><button class="ghost" id="logout" type="button">Salir</button></div>
   </header>
 
+  <div id="demoBar" class="demobar" hidden>Estás viendo la <b>DEMO</b> con datos inventados. Lo que marques aquí no toca los datos reales. <button type="button" class="linkbtn" id="demoOff">Volver a los datos reales</button></div>
   <div id="notice" class="notice" hidden></div>
 
   <nav class="views" id="views" role="tablist" aria-label="Secciones del panel">
@@ -568,8 +572,18 @@ window.addEventListener("error", function(e){
   async function sha256(s){ var b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0");}).join(""); }
 
   // ---------- Llamadas al webhook (Make valida el acceso en cada llamada) ----------
+  // Entorno (solo web): "real" o "demo". Make elige la base según este valor; los accesos se comprueban siempre en la real.
+  var ENV = (function(){ try{ return sessionStorage.getItem("bni_env")==="demo" ? "demo" : "real"; }catch(e){ return "real"; } })();
+  function setEnv(e){ ENV=e; try{ sessionStorage.setItem("bni_env", e); }catch(x){} applyEnv(); }
+  function applyEnv(){
+    var demo = ENV==="demo";
+    $("envBtn").hidden = MODE!=="web"; $("envBtn").setAttribute("aria-pressed", demo?"true":"false"); $("envBtn").textContent = demo ? "Demo" : "Ver demo";
+    $("demoBar").hidden = !(MODE==="web" && demo);
+  }
+  $("envBtn").addEventListener("click", function(){ setEnv(ENV==="demo"?"real":"demo"); refresh(false).catch(handleErr); });
+  $("demoOff").addEventListener("click", function(){ setEnv("real"); refresh(false).catch(handleErr); });
   async function call(table, offset){
-    var body=new URLSearchParams({email:cred.email, h:cred.h, table:table});
+    var body=new URLSearchParams({email:cred.email, h:cred.h, table:table, env:ENV});
     if(offset) body.set("offset", offset);
     var res;
     try{ res=await fetch(ENDPOINT,{method:"POST", body:body}); }
@@ -620,7 +634,7 @@ window.addEventListener("error", function(e){
   $("logout").addEventListener("click", function(){ store("bni_cred",null); cred=null; people=[]; sessions=[]; ins=[]; showLogin(); });
   $("refresh").addEventListener("click", function(){ refresh(false).catch(handleErr); });
   function showLogin(){ $("boot").hidden=true; $("app").hidden=true; $("login").hidden=false; }
-  function showApp(){ $("boot").hidden=true; $("login").hidden=true; $("app").hidden=false; }
+  function showApp(){ $("boot").hidden=true; $("login").hidden=true; $("app").hidden=false; applyEnv(); }
 
   async function refresh(first){
     $("fresh").textContent="Actualizando…";
@@ -995,7 +1009,7 @@ window.addEventListener("error", function(e){
   }
   async function postRecords(action, records){
     for(var j=0;j<records.length;j+=10){
-      var body=new URLSearchParams({email:cred.email, h:cred.h, action:action, records:JSON.stringify(records.slice(j,j+10))});
+      var body=new URLSearchParams({email:cred.email, h:cred.h, action:action, env:ENV, records:JSON.stringify(records.slice(j,j+10))});
       var res;
       try{ res=await fetch(ENDPOINT,{method:"POST", body:body}); }catch(e){ var e0=new Error("red"); e0.code="red"; throw e0; }
       if(res.status===401){ var e1=new Error("credenciales"); e1.code="401"; throw e1; }
